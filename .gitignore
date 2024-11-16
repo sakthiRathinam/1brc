@@ -1,0 +1,62 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Test binary artifacts
+*.coverprofile
+
+# Go Modules
+go.sum
+go.work.sum
+
+# IDE and editor configurations
+.vscode/
+.idea/
+*.iml
+
+# Node modules (if you have any JS/TS in your project)
+node_modules/
+
+# Logs
+*.log
+*.log.*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+
+# Cache and build directories
+*.cache
+.cache/
+tmp/
+*.tmp
+build/
+dist/
+
+# GoLand / JetBrains specific
+*.iws
+*.ipr
+*.idea/
+
+# Dependency directories (vendor dir if not using Go modules)
+vendor/
+
+# Coverage files
+*.prof
+coverage.out
+
+# Static analysis tools and linters
+staticcheck/
+golangci-lint/
+
+# data file for 1brc challenge
+measurements.txt
