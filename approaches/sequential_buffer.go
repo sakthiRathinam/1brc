@@ -24,29 +24,18 @@ type ComputedResult struct {
 	mean        float64
 }
 
-func SequentialScanner(fileLoc string) {
+func SequentialScanner(fileLoc string) string {
 	stations := make(map[string]measurements)
-	read_file_in_buffer_return_calc_results(fileLoc, &stations)
-	stationArr := make([]ComputedResult, 0)
-	for key, station := range stations {
-		stationArr = append(stationArr, ComputedResult{stationName: key, max: station.max, min: station.min, mean: station.mean})
-	}
-	sort.Slice(stationArr, func(i, j int) bool {
-		return stationArr[i].stationName < stationArr[j].stationName
-	})
-
-	final_output := "{"
-	for indx, station := range stationArr {
-		if indx == len(stationArr)-1 {
-			final_output += fmt.Sprintf("%s=%.2f/:%.2f/%.2f}", station.stationName, station.max, station.min, station.mean)
-			break
-		}
-		final_output += fmt.Sprintf("%s=%.2f/:%.2f/%.2f, ", station.stationName, station.max, station.min, station.mean)
+	final_output, err := read_file_in_buffer_return_calc_results(fileLoc, &stations)
+	if err != nil {
+		fmt.Println("Error while reading the file", err)
+		return ""
 	}
 	fmt.Println(final_output)
+	return final_output
 }
 
-func read_file_in_buffer_return_calc_results(filepath string, stations *map[string]measurements) {
+func read_file_in_buffer_return_calc_results(filepath string, stations *map[string]measurements) (string, error) {
 	fileObj, err := os.Open(filepath)
 	if err != nil {
 		fmt.Println("Error while opening the file", err)
@@ -57,10 +46,32 @@ func read_file_in_buffer_return_calc_results(filepath string, stations *map[stri
 		line := scanner.Text()
 		process_line_and_update_station(line, stations)
 		if err != nil {
-			continue
+			return "", err
 		}
 	}
+	return get_final_output(stations), nil
 
+}
+
+func get_final_output(stations *map[string]measurements) string {
+	stationArr := make([]ComputedResult, 0)
+	for key, station := range *stations {
+		stationArr = append(stationArr, ComputedResult{stationName: key, max: station.max, min: station.min, mean: station.mean})
+	}
+	sort.Slice(stationArr, func(i, j int) bool {
+		return stationArr[i].stationName < stationArr[j].stationName
+	})
+
+	final_output := "{"
+	for indx, station := range stationArr {
+		if indx == len(stationArr)-1 {
+			final_output += fmt.Sprintf("%s=%.1f/%.1f/%.1f}", station.stationName, station.min, station.mean, station.max)
+			break
+		}
+		fmt.Println(station)
+		final_output += fmt.Sprintf("%s=%.1f/%.1f/%.1f, ", station.stationName, station.min, station.mean, station.max)
+	}
+	return final_output
 }
 
 func process_line_and_update_station(line string, STATIONS *map[string]measurements) {
