@@ -3,6 +3,7 @@ package approach1singlethreaded
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -56,7 +57,7 @@ func read_file_in_buffer_return_calc_results(filepath string, stations *map[stri
 func get_final_output(stations *map[string]measurements) string {
 	stationArr := make([]ComputedResult, 0)
 	for key, station := range *stations {
-		stationArr = append(stationArr, ComputedResult{stationName: key, max: station.max, min: station.min, mean: station.mean})
+		stationArr = append(stationArr, ComputedResult{stationName: key, max: math.Round(station.max*10) / 10.0, min: math.Round(station.min*10) / 10.0, mean: math.Round(station.mean*10) / 10.0})
 	}
 	sort.Slice(stationArr, func(i, j int) bool {
 		return stationArr[i].stationName < stationArr[j].stationName
