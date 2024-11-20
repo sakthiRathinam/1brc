@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"time"
 
 	approaches "github.com/sakthiRathinam/1brc/approaches"
@@ -14,9 +15,12 @@ import (
 var cpu_profile = flag.String("cpuprofile", "", "write cpu profile to file")
 var mem_profile = flag.String("memprofile", "", "write memory profile to this file")
 var file_location = flag.String("fileloc", "data/measurements.txt", "get the file for processing")
+var chunk_size = flag.String("chunksize", "60000", "read it given chunk size")
+var generate_fake_measurements = flag.String("generateFake", "0", "Number if you want to generate fake measuremetns")
 
 func main() {
 	flag.Parse()
+
 	if *cpu_profile != "" {
 		cpuProfileFile, err := os.Create("./profiles/" + *cpu_profile)
 		if err != nil {
@@ -30,6 +34,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 
 	}
+
 	if *mem_profile != "" {
 		memProfileFile, err := os.Create("./profiles/" + *mem_profile)
 		if err != nil {
@@ -41,8 +46,21 @@ func main() {
 			panic("Error while starting the cpu profiler" + err.Error())
 		}
 	}
+
+	chunk_size, err := strconv.Atoi(*chunk_size)
+	if err != nil {
+		panic("Chunk size should be an integer without decimal points" + err.Error())
+	}
+
+	no_of_fake_measurements, err := strconv.Atoi(*generate_fake_measurements)
+
+	if no_of_fake_measurements != 0 && err == nil {
+		GenerateFakeMeasurements(no_of_fake_measurements, "data/fake_measurements.txt")
+		*file_location = "data/fake_measurements.txt"
+	}
+
 	start_time := time.Now()
-	approaches.SequentialScanner(*file_location)
+	approaches.SequentialBuffer(*file_location, chunk_size)
 	elapsed_time := time.Since(start_time)
 	fmt.Println("Time taken to execute the program", elapsed_time)
 

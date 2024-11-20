@@ -31,7 +31,7 @@ func TestSequentialScannerLogic(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		output := approaches.SequentialScanner(tc.fileLoc)
+		output := approaches.LineByLineApproach(tc.fileLoc)
 		expectedOutput := ReadFile(tc.expectedOutputPath)
 		assert.Equal(t, expectedOutput, output, "Expected and actual output should be same")
 	}
