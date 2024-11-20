@@ -69,7 +69,6 @@ func get_final_output(stations *map[string]measurements) string {
 			final_output += fmt.Sprintf("%s=%.1f/%.1f/%.1f}", station.stationName, station.min, station.mean, station.max)
 			break
 		}
-		fmt.Println(station)
 		final_output += fmt.Sprintf("%s=%.1f/%.1f/%.1f, ", station.stationName, station.min, station.mean, station.max)
 	}
 	return final_output

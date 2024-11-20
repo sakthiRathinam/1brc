@@ -24,11 +24,12 @@ func read_file_in_chunk_and_process(filepath string, chunkSize int, stations *ma
 		fmt.Println("Error while opening the file", err)
 	}
 	defer fileObj.Close()
-	fmt.Println("chunk_size", chunkSize)
+
 	reader := bufio.NewReaderSize(fileObj, chunkSize)
 	buffer := make([]byte, chunkSize)
 	count := 0
 	partialLine := []byte{}
+
 	for {
 		n, err := reader.Read(buffer)
 		if err != nil {
@@ -47,11 +48,11 @@ func read_file_in_chunk_and_process(filepath string, chunkSize int, stations *ma
 			if index == len(splittedLines)-1 {
 				break
 			}
-			count++
-			fmt.Println(chunkLine)
+			process_line_and_update_station(chunkLine, stations)
 		}
 
 	}
+
 	fmt.Println("total processed lines", count)
-	return "", nil
+	return get_final_output(stations), nil
 }

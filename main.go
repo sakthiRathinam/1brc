@@ -35,19 +35,10 @@ func main() {
 
 	}
 
-	if *mem_profile != "" {
-		memProfileFile, err := os.Create("./profiles/" + *mem_profile)
-		if err != nil {
-			panic("Error while creating the memory profile file" + err.Error())
-		}
-		defer memProfileFile.Close()
-		runtime.GC()
-		if err := pprof.WriteHeapProfile(memProfileFile); err != nil {
-			panic("Error while starting the cpu profiler" + err.Error())
-		}
-	}
-
 	chunk_size, err := strconv.Atoi(*chunk_size)
+	if chunk_size != 60000 {
+		chunk_size = chunk_size * 1024 * 1024
+	}
 	if err != nil {
 		panic("Chunk size should be an integer without decimal points" + err.Error())
 	}
@@ -64,4 +55,15 @@ func main() {
 	elapsed_time := time.Since(start_time)
 	fmt.Println("Time taken to execute the program", elapsed_time)
 
+	if *mem_profile != "" {
+		memProfileFile, err := os.Create("./profiles/" + *mem_profile)
+		if err != nil {
+			panic("Error while creating the memory profile file" + err.Error())
+		}
+		defer memProfileFile.Close()
+		runtime.GC()
+		if err := pprof.WriteHeapProfile(memProfileFile); err != nil {
+			panic("Error while starting the cpu profiler" + err.Error())
+		}
+	}
 }
