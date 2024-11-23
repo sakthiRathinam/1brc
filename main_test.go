@@ -10,32 +10,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSequentialScannerLogic(t *testing.T) {
-	testCases := []struct {
-		fileLoc            string
-		expectedOutputPath string
-	}{
-		{
-			fileLoc:            "test_cases/measurements-1.txt",
-			expectedOutputPath: "test_cases/measurements-1.out",
-		},
-		{
-			fileLoc:            "test_cases/measurements-2.txt",
-			expectedOutputPath: "test_cases/measurements-2.out",
-		},
+var testCases = []struct {
+	fileLoc            string
+	expectedOutputPath string
+}{
+	{
+		fileLoc:            "test_cases/measurements-1.txt",
+		expectedOutputPath: "test_cases/measurements-1.out",
+	},
+	{
+		fileLoc:            "test_cases/measurements-2.txt",
+		expectedOutputPath: "test_cases/measurements-2.out",
+	},
 
-		{
-			fileLoc:            "test_cases/measurements-3.txt",
-			expectedOutputPath: "test_cases/measurements-3.out",
-		},
+	{
+		fileLoc:            "test_cases/measurements-3.txt",
+		expectedOutputPath: "test_cases/measurements-3.out",
+	},
+}
+
+func TestSequentialScannerLogic(t *testing.T) {
+	chunkSize := 64 * 1024 * 1020
+	for index, tc := range testCases {
+		chunkSize += index
+		output := approaches.SequentialBuffer(tc.fileLoc, chunkSize)
+		expectedOutput := ReadFile(tc.expectedOutputPath)
+		assert.Equal(t, expectedOutput, output, "Expected and actual output should be same")
 	}
 
+}
+
+func TestLineByLineLogic(t *testing.T) {
 	for _, tc := range testCases {
 		output := approaches.LineByLineApproach(tc.fileLoc)
 		expectedOutput := ReadFile(tc.expectedOutputPath)
 		assert.Equal(t, expectedOutput, output, "Expected and actual output should be same")
 	}
-
 }
 
 func ReadFile(filepath string) string {
