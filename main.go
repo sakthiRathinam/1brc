@@ -51,7 +51,7 @@ func main() {
 	}
 
 	start_time := time.Now()
-	approaches.SequentialBuffer(*file_location, chunk_size)
+	approaches.ThreadedBuffer(*file_location, chunk_size)
 	elapsed_time := time.Since(start_time)
 	fmt.Println("Time taken to execute the program", elapsed_time)
 
