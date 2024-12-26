@@ -10,24 +10,24 @@ import (
 )
 
 type StationsStore struct {
-	Stations *map[string]measurements
-	lock     *sync.RWMutex
+	Stations  *map[string]measurements
+	lock      *sync.RWMutex
+	waitGroup *sync.WaitGroup
 }
 
 func (storeObj *StationsStore) updateStations(line string) {
 	lineVals := strings.Split(line, ";")
+	if len(lineVals) != 2 {
+		return
+	}
 	stationName := lineVals[0]
 	temp := lineVals[1]
-	storeObj.lock.Lock()
-	defer storeObj.lock.Unlock()
 
 	station, ok := (*storeObj.Stations)[stationName]
 	tempVal, err := strconv.ParseFloat(temp, 64)
 	if err != nil {
 		fmt.Println("error while parsing the temp val")
 	}
-	storeObj.lock.Lock()
-	defer storeObj.lock.Unlock()
 	if !ok {
 		(*storeObj.Stations)[stationName] = measurements{min: tempVal, max: tempVal, mean: tempVal, totalSum: tempVal, totalCount: 1}
 		return
@@ -49,7 +49,7 @@ func (storeObj *StationsStore) updateStations(line string) {
 
 func createStationStore() StationsStore {
 	stations := make(map[string]measurements)
-	return StationsStore{Stations: &stations, lock: &sync.RWMutex{}}
+	return StationsStore{Stations: &stations, lock: &sync.RWMutex{}, waitGroup: &sync.WaitGroup{}}
 }
 
 func ThreadedBuffer(fileLoc string, chunkSize int) string {
@@ -75,7 +75,6 @@ func read_file_in_chunk_and_assign_to_goroutine(filepath string, chunkSize int, 
 	buffer := make([]byte, chunkSize)
 	count := 0
 	partialLine := []byte{}
-
 	for {
 		n, err := reader.Read(buffer)
 		if err != nil {
@@ -87,19 +86,23 @@ func read_file_in_chunk_and_assign_to_goroutine(filepath string, chunkSize int, 
 		}
 
 		buffer = append(partialLine, buffer[:n]...)
+
 		chunkString := string(buffer)
 
 		splittedLines := strings.Split(chunkString, "\n")
 		partialLine = []byte(splittedLines[len(splittedLines)-1])
-		for index, chunkLine := range strings.Split(chunkString, "\n") {
-			if index == len(splittedLines)-1 {
-				break
-			}
-			go stationStoreObj.updateStations(chunkLine)
-		}
-
+		process_buffer_string(splittedLines, stationStoreObj)
 	}
 
 	fmt.Println("total processed lines", count)
 	return get_final_output(stationStoreObj.Stations), nil
+}
+
+func process_buffer_string(splittedLines []string, stationStoreObj *StationsStore) {
+	for index, chunkLine := range splittedLines {
+		if index == len(splittedLines)-1 {
+			break
+		}
+		stationStoreObj.updateStations(chunkLine)
+	}
 }

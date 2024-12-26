@@ -17,6 +17,13 @@ var mem_profile = flag.String("memprofile", "", "write memory profile to this fi
 var file_location = flag.String("fileloc", "data/measurements.txt", "get the file for processing")
 var chunk_size = flag.String("chunksize", "60000", "read it given chunk size")
 var generate_fake_measurements = flag.String("generateFake", "0", "Number if you want to generate fake measuremetns")
+var approach = flag.String("approach", "threadedBuffer", "Approach to be used for processing")
+
+var approachesMap = map[string]func(string, int) string{
+	"threadedBuffer":   approaches.ThreadedBuffer,
+	"sequentialBuffer": approaches.SequentialBuffer,
+	"lineByline":       approaches.LineByLineApproach,
+}
 
 func main() {
 	flag.Parse()
@@ -50,8 +57,13 @@ func main() {
 		*file_location = "data/fake_measurements.txt"
 	}
 
+	selected_apporach, ok := approachesMap[*approach]
+	if !ok {
+		panic("Approach not found")
+	}
+
 	start_time := time.Now()
-	approaches.ThreadedBuffer(*file_location, chunk_size)
+	selected_apporach(*file_location, chunk_size)
 	elapsed_time := time.Since(start_time)
 	fmt.Println("Time taken to execute the program", elapsed_time)
 

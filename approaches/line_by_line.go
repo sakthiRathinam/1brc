@@ -25,7 +25,7 @@ type ComputedResult struct {
 	mean        float64
 }
 
-func LineByLineApproach(fileLoc string) string {
+func LineByLineApproach(fileLoc string, chunkSize int) string {
 	stations := make(map[string]measurements)
 	final_output, err := read_file_in_buffer_return_calc_results(fileLoc, &stations)
 	if err != nil {
