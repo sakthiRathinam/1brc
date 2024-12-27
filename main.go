@@ -23,6 +23,7 @@ var approachesMap = map[string]func(string, int) string{
 	"threadedBuffer":   approaches.ThreadedBuffer,
 	"sequentialBuffer": approaches.SequentialBuffer,
 	"lineByline":       approaches.LineByLineApproach,
+	"producerConsumer": approaches.ProducerConsumerApproach,
 }
 
 func main() {
