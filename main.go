@@ -17,7 +17,7 @@ var mem_profile = flag.String("memprofile", "", "write memory profile to this fi
 var file_location = flag.String("fileloc", "data/measurements.txt", "get the file for processing")
 var chunk_size = flag.String("chunksize", "60000", "read it given chunk size")
 var generate_fake_measurements = flag.String("generateFake", "0", "Number if you want to generate fake measuremetns")
-var approach = flag.String("approach", "threadedBuffer", "Approach to be used for processing")
+var approach = flag.String("approach", "producerConsumer", "Approach to be used for processing")
 
 var approachesMap = map[string]func(string, int) string{
 	"threadedBuffer":   approaches.ThreadedBuffer,

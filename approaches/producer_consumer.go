@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 )
 
 var workerConcurrency = 0
@@ -14,25 +15,39 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	resultMap := make(map[string]measurements)
 	chunkStream := make(chan []string)
 	resultStream := make(chan map[string]measurements)
+	countStream := make(chan int)
+	waitGroup := sync.WaitGroup{}
 	if workerConcurrency == 0 {
 		workerConcurrency = runtime.NumCPU() - 1
 	}
+	fmt.Println(workerConcurrency, "worker concurrencly")
 	// spawn workers
 	for i := 0; i < workerConcurrency; i++ {
-		go chunkProcessWorker(&chunkStream, &resultStream)
+		waitGroup.Add(1)
+		go chunkProcessWorker(&chunkStream, &resultStream, &countStream, &waitGroup)
 	}
 	// read file and put the chunk in chunkstream
-	chunkProducer(fileLoc, chunkSize, &chunkStream)
+	go chunkProducer(fileLoc, chunkSize, &chunkStream)
 	// merge the results
 	fmt.Println(resultMap)
+	totalRowsProcessed := 0
+	go func() {
+		waitGroup.Wait()
+		close(countStream)
+	}()
+	for count := range countStream {
+		totalRowsProcessed += count
+	}
+	fmt.Println("this many rows got processed", totalRowsProcessed)
 	return ""
 	// get the finaloutput
 }
 
-func chunkProcessWorker(chunkChannel *chan []string, resultChannel *chan map[string]measurements) {
+func chunkProcessWorker(chunkChannel *chan []string, resultChannel *chan map[string]measurements, countStream *chan int, waitGroup *sync.WaitGroup) {
 	for chunkString := range *chunkChannel {
-		fmt.Println(len(chunkString))
+		*countStream <- len(chunkString)
 	}
+	defer waitGroup.Done()
 }
 
 func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) {
@@ -51,7 +66,7 @@ func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) 
 		n, err := reader.Read(buffer)
 		if err != nil {
 			if err.Error() == "EOF" {
-				// add that missing line
+				fmt.Println(partialLine)
 				break
 			}
 			fmt.Println("Error while reading the file" + err.Error())
@@ -63,8 +78,10 @@ func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) 
 
 		splittedLines := strings.Split(chunkString, "\n")
 		partialLine = []byte(splittedLines[len(splittedLines)-1])
+		splittedLines = splittedLines[:len(splittedLines)-1]
 		*chunkChannel <- splittedLines
 	}
+	close(*chunkChannel)
 
 	fmt.Println("total processed lines", count)
 }
