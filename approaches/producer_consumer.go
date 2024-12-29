@@ -15,7 +15,7 @@ var workerConcurrency = 0
 func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	resultMap := make(map[string]measurements)
 	chunkStream := make(chan []string)
-	resultStream := make(chan map[string]measurements)
+	resultStream := make(chan map[string]measurements, 10)
 	waitGroup := sync.WaitGroup{}
 	if workerConcurrency == 0 {
 		workerConcurrency = runtime.NumCPU() - 1
@@ -27,12 +27,7 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 		go chunkProcessWorker(&chunkStream, &resultStream, &waitGroup)
 	}
 
-	go chunkProducer(fileLoc, chunkSize, &chunkStream)
-
-	go func() {
-		waitGroup.Wait()
-		close(resultStream)
-	}()
+	go chunkProducer(fileLoc, chunkSize, &chunkStream, &resultStream, &waitGroup)
 
 	for tempMap := range resultStream {
 		for stationName, measurement := range tempMap {
@@ -60,7 +55,6 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	}
 
 	finalOutput := finalFormatting(&resultMap)
-	fmt.Println(finalOutput)
 	return finalOutput
 }
 
@@ -108,7 +102,7 @@ func processChunk(fileLines []string) map[string]measurements {
 	return tempMap
 }
 
-func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) {
+func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string, resultChannel *chan map[string]measurements, waitGroup *sync.WaitGroup) {
 	fmt.Println("Chunk size", chunkSize)
 	fileObj, err := os.Open(filepath)
 	if err != nil {
@@ -139,7 +133,9 @@ func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) 
 		splittedLines = splittedLines[:len(splittedLines)-1]
 		*chunkChannel <- splittedLines
 	}
-	close(*chunkChannel)
 
+	close(*chunkChannel)
+	waitGroup.Wait()
+	close(*resultChannel)
 	fmt.Println("total processed lines", count)
 }
