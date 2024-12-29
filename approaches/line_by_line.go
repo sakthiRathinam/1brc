@@ -27,7 +27,7 @@ type ComputedResult struct {
 
 func LineByLineApproach(fileLoc string, chunkSize int) string {
 	stations := make(map[string]measurements)
-	final_output, err := read_file_in_buffer_return_calc_results(fileLoc, &stations)
+	final_output, err := processFile(fileLoc, &stations)
 	if err != nil {
 		fmt.Println("Error while reading the file", err)
 		return ""
@@ -36,7 +36,7 @@ func LineByLineApproach(fileLoc string, chunkSize int) string {
 	return final_output
 }
 
-func read_file_in_buffer_return_calc_results(filepath string, stations *map[string]measurements) (string, error) {
+func processFile(filepath string, stations *map[string]measurements) (string, error) {
 	fileObj, err := os.Open(filepath)
 	if err != nil {
 		fmt.Println("Error while opening the file", err)
@@ -45,16 +45,16 @@ func read_file_in_buffer_return_calc_results(filepath string, stations *map[stri
 	scanner := bufio.NewScanner(fileObj)
 	for scanner.Scan() {
 		line := scanner.Text()
-		process_line_and_update_station(line, stations)
+		processLineAndUpdateStationMap(line, stations)
 		if err != nil {
 			return "", err
 		}
 	}
-	return get_final_output(stations), nil
+	return finalFormatting(stations), nil
 
 }
 
-func get_final_output(stations *map[string]measurements) string {
+func finalFormatting(stations *map[string]measurements) string {
 	stationArr := make([]ComputedResult, 0)
 	for key, station := range *stations {
 		stationArr = append(stationArr, ComputedResult{stationName: key, max: math.Round(station.max*10) / 10.0, min: math.Round(station.min*10) / 10.0, mean: math.Round(station.mean*10) / 10.0})
@@ -74,7 +74,7 @@ func get_final_output(stations *map[string]measurements) string {
 	return final_output
 }
 
-func process_line_and_update_station(line string, STATIONS *map[string]measurements) {
+func processLineAndUpdateStationMap(line string, STATIONS *map[string]measurements) {
 	lineVals := strings.Split(line, ";")
 	if len(lineVals) < 2 {
 		return

@@ -54,7 +54,7 @@ func createStationStore() StationsStore {
 
 func ThreadedBuffer(fileLoc string, chunkSize int) string {
 	stationStore := createStationStore()
-	final_output, err := read_file_in_chunk_and_assign_to_goroutine(fileLoc, chunkSize, &stationStore)
+	final_output, err := chunkProcess(fileLoc, chunkSize, &stationStore)
 	if err != nil {
 		fmt.Println("Error while reading the file", err)
 		return ""
@@ -63,7 +63,7 @@ func ThreadedBuffer(fileLoc string, chunkSize int) string {
 	return final_output
 }
 
-func read_file_in_chunk_and_assign_to_goroutine(filepath string, chunkSize int, stationStoreObj *StationsStore) (string, error) {
+func chunkProcess(filepath string, chunkSize int, stationStoreObj *StationsStore) (string, error) {
 	fmt.Println("Chunk size", chunkSize)
 	fileObj, err := os.Open(filepath)
 	if err != nil {
@@ -91,14 +91,14 @@ func read_file_in_chunk_and_assign_to_goroutine(filepath string, chunkSize int, 
 
 		splittedLines := strings.Split(chunkString, "\n")
 		partialLine = []byte(splittedLines[len(splittedLines)-1])
-		process_buffer_string(splittedLines, stationStoreObj)
+		processBufferString(splittedLines, stationStoreObj)
 	}
 
 	fmt.Println("total processed lines", count)
-	return get_final_output(stationStoreObj.Stations), nil
+	return finalFormatting(stationStoreObj.Stations), nil
 }
 
-func process_buffer_string(splittedLines []string, stationStoreObj *StationsStore) {
+func processBufferString(splittedLines []string, stationStoreObj *StationsStore) {
 	for index, chunkLine := range splittedLines {
 		if index == len(splittedLines)-1 {
 			break

@@ -61,7 +61,7 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 		}
 	}
 	fmt.Println("this many rows got processed", totalRowsProcessed)
-	finalOutput := get_final_output(&resultMap)
+	finalOutput := finalFormatting(&resultMap)
 	fmt.Println(finalOutput)
 	return finalOutput
 }
