@@ -35,12 +35,35 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 		waitGroup.Wait()
 		close(resultStream)
 	}()
+
 	for tempMap := range resultStream {
-		fmt.Println(len(tempMap))
+		for stationName, measurement := range tempMap {
+			station, ok := resultMap[stationName]
+			if !ok {
+				resultMap[stationName] = measurement
+			}
+
+			if station.max < measurement.max {
+				station.max = measurement.max
+			}
+			if station.min > measurement.min {
+				station.min = measurement.min
+			}
+
+			station.totalCount += measurement.totalCount
+
+			station.totalSum += measurement.totalSum
+
+			station.mean = station.totalSum / station.totalCount
+
+			resultMap[stationName] = station
+
+		}
 	}
 	fmt.Println("this many rows got processed", totalRowsProcessed)
-	return ""
-	// get the finaloutput
+	finalOutput := get_final_output(&resultMap)
+	fmt.Println(finalOutput)
+	return finalOutput
 }
 
 func chunkProcessWorker(chunkChannel *chan []string, resultChannel *chan map[string]measurements, waitGroup *sync.WaitGroup) {

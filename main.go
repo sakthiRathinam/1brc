@@ -15,7 +15,7 @@ import (
 var cpu_profile = flag.String("cpuprofile", "", "write cpu profile to file")
 var mem_profile = flag.String("memprofile", "", "write memory profile to this file")
 var file_location = flag.String("fileloc", "data/measurements.txt", "get the file for processing")
-var chunk_size = flag.String("chunksize", "60000", "read it given chunk size")
+var chunk_size = flag.String("chunksize", "60", "read it given chunk size")
 var generate_fake_measurements = flag.String("generateFake", "0", "Number if you want to generate fake measuremetns")
 var approach = flag.String("approach", "producerConsumer", "Approach to be used for processing")
 
