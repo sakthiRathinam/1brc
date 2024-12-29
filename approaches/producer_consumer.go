@@ -20,17 +20,15 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	if workerConcurrency == 0 {
 		workerConcurrency = runtime.NumCPU() - 1
 	}
+
 	fmt.Println(workerConcurrency, "worker concurrencly")
-	// spawn workers
 	for i := 0; i < workerConcurrency; i++ {
 		waitGroup.Add(1)
 		go chunkProcessWorker(&chunkStream, &resultStream, &waitGroup)
 	}
-	// read file and put the chunk in chunkstream
+
 	go chunkProducer(fileLoc, chunkSize, &chunkStream)
-	// merge the results
-	fmt.Println(resultMap)
-	totalRowsProcessed := 0
+
 	go func() {
 		waitGroup.Wait()
 		close(resultStream)
@@ -60,7 +58,7 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 
 		}
 	}
-	fmt.Println("this many rows got processed", totalRowsProcessed)
+
 	finalOutput := finalFormatting(&resultMap)
 	fmt.Println(finalOutput)
 	return finalOutput
