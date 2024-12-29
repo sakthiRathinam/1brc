@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -15,7 +16,6 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	resultMap := make(map[string]measurements)
 	chunkStream := make(chan []string)
 	resultStream := make(chan map[string]measurements)
-	countStream := make(chan int)
 	waitGroup := sync.WaitGroup{}
 	if workerConcurrency == 0 {
 		workerConcurrency = runtime.NumCPU() - 1
@@ -24,7 +24,7 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	// spawn workers
 	for i := 0; i < workerConcurrency; i++ {
 		waitGroup.Add(1)
-		go chunkProcessWorker(&chunkStream, &resultStream, &countStream, &waitGroup)
+		go chunkProcessWorker(&chunkStream, &resultStream, &waitGroup)
 	}
 	// read file and put the chunk in chunkstream
 	go chunkProducer(fileLoc, chunkSize, &chunkStream)
@@ -33,21 +33,58 @@ func ProducerConsumerApproach(fileLoc string, chunkSize int) string {
 	totalRowsProcessed := 0
 	go func() {
 		waitGroup.Wait()
-		close(countStream)
+		close(resultStream)
 	}()
-	for count := range countStream {
-		totalRowsProcessed += count
+	for tempMap := range resultStream {
+		fmt.Println(len(tempMap))
 	}
 	fmt.Println("this many rows got processed", totalRowsProcessed)
 	return ""
 	// get the finaloutput
 }
 
-func chunkProcessWorker(chunkChannel *chan []string, resultChannel *chan map[string]measurements, countStream *chan int, waitGroup *sync.WaitGroup) {
+func chunkProcessWorker(chunkChannel *chan []string, resultChannel *chan map[string]measurements, waitGroup *sync.WaitGroup) {
 	for chunkString := range *chunkChannel {
-		*countStream <- len(chunkString)
+		processedTempMap := processChunk(chunkString)
+		*resultChannel <- processedTempMap
 	}
 	defer waitGroup.Done()
+}
+func processChunk(fileLines []string) map[string]measurements {
+	tempMap := make(map[string]measurements)
+	for _, line := range fileLines {
+		lineVals := strings.Split(line, ";")
+		if len(lineVals) != 2 {
+			continue
+		}
+		stationName := lineVals[0]
+		temperature := lineVals[1]
+
+		station, ok := tempMap[stationName]
+
+		tempVal, err := strconv.ParseFloat(temperature, 64)
+		if err != nil {
+			continue
+		}
+
+		if !ok {
+			tempMap[stationName] = measurements{min: tempVal, max: tempVal, mean: tempVal, totalSum: tempVal, totalCount: 1}
+			continue
+		}
+		if station.max < tempVal {
+			station.max = tempVal
+		}
+		if station.min > tempVal {
+			station.min = tempVal
+		}
+
+		station.totalCount += 1
+		station.totalSum += tempVal
+
+		station.mean = station.totalSum / station.totalCount
+
+	}
+	return tempMap
 }
 
 func chunkProducer(filepath string, chunkSize int, chunkChannel *chan []string) {
